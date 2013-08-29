@@ -24,6 +24,8 @@
 
 #import "TTTDateTransformers.h"
 
+#import "NSData+Base64.h"
+
 static NSString * AFQueryByAppendingParameters(NSString *query, NSDictionary *parameters) {
     static NSCharacterSet *_componentSeparatorCharacterSet = nil;
     static dispatch_once_t onceToken;
@@ -177,6 +179,15 @@ static NSString * AFQueryByAppendingParameters(NSString *query, NSDictionary *pa
     }
     
     [[entity attributesByName] enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+
+        // convert base64 encoded string back to NSData for binary attributes
+        if ([(NSAttributeDescription *)obj attributeType] == NSBinaryDataAttributeType) {
+            id value = [mutableAttributes valueForKey:key];
+            if (value && ![value isEqual:[NSNull null]] && [value isKindOfClass:[NSString class]]) {
+                [mutableAttributes setValue:[NSData dataFromBase64String:value] forKey:key];
+            }
+        }
+
         if ([(NSAttributeDescription *)obj attributeType] == NSDateAttributeType) {
             id value = [mutableAttributes valueForKey:key];
             if (value && ![value isEqual:[NSNull null]] && [value isKindOfClass:[NSString class]]) {
@@ -235,6 +246,11 @@ static NSString * AFQueryByAppendingParameters(NSString *query, NSDictionary *pa
         // Use NSString representation of NSDate to avoid NSInvalidArgumentException when serializing JSON
         if ([obj isKindOfClass:[NSDate class]]) {
             [mutableAttributes setObject:[obj description] forKey:key];
+        }
+
+        // Use base64 encoded NSString representation of NSData to avoid NSInvalidArgumentException when serializing JSON
+        if ([obj isKindOfClass:[NSData class]]) {
+            [mutableAttributes setObject:[obj base64EncodedString] forKey:key];
         }
     }];
 

@@ -19,4 +19,5 @@ Pod::Spec.new do |s|
   s.dependency 'AFNetworking', '~> 1.3.2'
   s.dependency 'InflectorKit'
   s.dependency 'TransformerKit'
+  s.dependency 'NSData+Base64'
 end
